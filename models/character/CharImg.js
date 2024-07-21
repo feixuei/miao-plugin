@@ -4,9 +4,9 @@
 import fs from 'node:fs'
 import lodash from 'lodash'
 import sizeOf from 'image-size'
-import { Cfg } from '#miao'
+import { miaoPath } from '#miao.path'
 
-const rPath = `${process.cwd()}/plugins/miao-plugin/resources`
+const rPath = `${miaoPath}/resources`
 const CharImg = {
 
   // 获取角色的插画
@@ -61,7 +61,7 @@ const CharImg = {
       let ret = []
       for (let type of ['webp', 'png']) {
         if (fs.existsSync(`${rPath}/${imgPath}.${type}`)) {
-          ret.push(imgPath + '.webp')
+          ret.push(imgPath + `.${type}`)
         }
       }
       if (fs.existsSync(`${rPath}/${imgPath}`)) {
@@ -129,15 +129,20 @@ const CharImg = {
     const nPath = `/meta-sr/character/${name}/`
     let imgs = {}
     let add = (key, path, path2) => {
-      imgs[key] = `${nPath}${path}.${fileType}`
+      if (path2 && fs.existsSync(`${rPath}/${nPath}/${path2}.${fileType}`)) {
+        imgs[key] = `${nPath}${path2}.${fileType}`
+      } else {
+        imgs[key] = `${nPath}${path}.${fileType}`
+      }
     }
     add('face', 'imgs/face')
+    add('qFace', 'imgs/face', 'imgs/face-q')
     add('splash', 'imgs/splash')
     add('preview', 'imgs/preview')
     for (let i = 1; i <= 3; i++) {
       add(`tree${i}`, `imgs/tree-${i}`)
     }
-    for (let key of ['a', 'e', 'q', 't', 'z', 'a2', 'e2']) {
+    for (let key of ['a', 'e', 'q', 't', 'z', 'a2', 'e2', 'q2']) {
       add(key, `imgs/talent-${key}`)
     }
     for (let i = 1; i <= 6; i++) {

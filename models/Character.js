@@ -81,12 +81,17 @@ class Character extends Base {
   get sName () {
     let name = this.name
     let abbr = this.abbr
-    return name.length <= 4 ? name : (abbr || name)
+    return name.length < 4 ? name : (abbr || name)
   }
 
   // 是否是旅行者
   get isTraveler () {
     return this.isGs && CharId.isTraveler(this.id)
+  }
+
+  // 是否是开拓者
+  get isTrailblazer () {
+    return this.isSr && CharId.isTrailblazer(this.id)
   }
 
   get weaponType () {
@@ -125,6 +130,11 @@ class Character extends Base {
   // 获取头像
   get face () {
     return this.getImgs().face
+  }
+
+  // 获取Q版头像
+  get qFace () {
+    return this.getImgs().qFace
   }
 
   // 获取侧脸图像

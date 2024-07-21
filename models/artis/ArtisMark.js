@@ -49,7 +49,7 @@ let ArtisMark = {
     }
 
     let key = ds.key
-    let isDmg = Format.isElem(key)
+    let isDmg = Format.isElem(key, game)
     let val = ds.value || ds[1]
     let num = ds.value || ds[1]
     if (!key || key === 'undefined') {
@@ -66,6 +66,9 @@ let ArtisMark = {
 
     if (charAttrCfg) {
       let mark = charAttrCfg[key]?.mark * num || 0
+      if (isDmg) {
+        mark = charAttrCfg.dmg?.mark * num || 0
+      }
       if (isMain) {
         mark = mark / 4 + 0.01
         ret.key = key
@@ -213,7 +216,7 @@ let ArtisMark = {
       mark: Format.comma(totalMark, 1),
       _mark: artis.mark,
       markClass: artis.markClass,
-      ...Data.getData(setData, 'sets,names,imgs'),
+      ...Data.getData(setData, 'sets,names,imgs')
     }
     if (withDetail) {
       ret.charWeight = lodash.mapValues(charCfg.attrs, ds => ds.weight)

@@ -207,6 +207,23 @@ export default class Player extends Base {
       }
     }
 
+    if (this.isSr) {
+      // 兼容处理开拓者的情况
+      if (char.isTrailblazer && !create) {
+        switch (id * 1) {
+          case 8001:
+            id = avatars['8001'] ? 8001 : 8002
+            break
+          case 8003:
+            id = avatars['8003'] ? 8003 : 8004
+            break
+          case 8005:
+            id = avatars['8005'] ? 8005 : 8006
+            break
+        }
+      }
+    }
+
     if (!avatars[id]) {
       if (create) {
         avatars[id] = Avatar.create({ id }, this.game)
@@ -381,6 +398,9 @@ export default class Player extends Base {
       let { talent } = avatar
       let ds = avatar.getDetail()
       ds.aeq = talent?.a?.original + talent?.e?.original + talent?.q?.original || 3
+      if (avatar.game === 'sr') {
+        ds.aeq = talent?.a?.original + talent?.e?.original + talent?.q?.original + talent?.t?.original || 4
+      }
       avatarRet[ds.id] = ds
 
       let profile = avatar.getProfile()
@@ -407,6 +427,4 @@ export default class Player extends Base {
     }
     return avatarRet
   }
-
-
 }

@@ -19,6 +19,16 @@ export default class ProfileRank {
     return rank
   }
 
+  static async getCharacterFromKey(key, game = 'gs') {
+    if (game === 'gs') {
+      // 原神的角色id都是8位
+      return /^miao:rank:\d+:(?:mark|dmg|crit|valid):(\d{8})$/.exec(key)
+    } else {
+      // 星铁的角色id都是4位
+      return /^miao:rank:\d+:(?:mark|dmg|crit|valid):(\d{4})$/.exec(key)
+    }
+  }
+
   /**
    * 获取群排行UID
    * @param groupId
@@ -31,11 +41,11 @@ export default class ProfileRank {
     return uids ? uids[0] : false
   }
 
-  static async getGroupMaxUidList (groupId, type = 'mark') {
+  static async getGroupMaxUidList (groupId, type = 'mark', game = 'gs') {
     let keys = await redis.keys(`miao:rank:${groupId}:${type}:*`)
     let ret = []
     for (let key of keys) {
-      let keyRet = /^miao:rank:[\w-]+:(?:mark|dmg|crit|valid):(\d{8})$/.exec(key)
+      let keyRet = await ProfileRank.getCharacterFromKey(key, game)
       if (keyRet && keyRet[1]) {
         let charId = keyRet[1]
         let uid = await ProfileRank.getGroupMaxUid(groupId, charId, type)
@@ -59,7 +69,13 @@ export default class ProfileRank {
    */
   static async getGroupUidList (groupId, charId, type = 'mark') {
     let number = Cfg.get('rankNumber', 15)
-    let uids = await redis.zRangeWithScores(`miao:rank:${groupId}:${type}:${charId}`, -`${number}`, -1)
+    // 特殊处理开拓者的情况
+    let charIdMap = {
+      8002: 8001,
+      8004: 8003,
+      8006: 8005
+    }
+    let uids = charIdMap[charId] ? await redis.zRangeWithScores(`miao:rank:${groupId}:${type}:${charIdMap[charId]}`, -`${number}`, -1) : await redis.zRangeWithScores(`miao:rank:${groupId}:${type}:${charId}`, -`${number}`, -1)
     return uids ? uids.reverse() : false
   }
 
@@ -69,10 +85,10 @@ export default class ProfileRank {
    * @param charId
    * @returns {Promise<void>}
    */
-  static async resetRank (groupId, charId = '') {
+  static async resetRank (groupId, charId = '', game = 'gs') {
     let keys = await redis.keys(`miao:rank:${groupId}:*`)
     for (let key of keys) {
-      let charRet = /^miao:rank:\d+:(?:mark|dmg|crit|valid):(\d{8})$/.exec(key)
+      let charRet = await ProfileRank.getCharacterFromKey(key, game)
       if (charRet) {
         if (charId === '' || charId * 1 === charRet[1] * 1) {
           await redis.del(key)
@@ -165,14 +181,14 @@ export default class ProfileRank {
     await redis.set(`miao:rank:uid-info:${uid}`, JSON.stringify(data), { EX: 3600 * 24 * 365 })
   }
 
-  static async delUidInfo (uid) {
+  static async delUidInfo (uid, game = 'gs') {
     let keys = await redis.keys('miao:rank:*')
     uid = uid + ''
-    if (!/\d{9}/.test(uid)) {
+    if (!/\d{9,10}/.test(uid)) {
       return false
     }
     for (let key of keys) {
-      let charRet = /^miao:rank:\d+:(?:mark|dmg|crit|valid):(\d{8})$/.exec(key)
+      let charRet = await ProfileRank.getCharacterFromKey(key, game)
       if (charRet) {
         await redis.zRem(key, uid)
       }
@@ -208,7 +224,7 @@ export default class ProfileRank {
       let data = await Data.redisGet(key)
       let { qq, uidType } = data
       if (!users[qq]) continue
-      let uidRet = /miao:rank:uid-info:(\d{9})/.exec(key)
+      let uidRet = /miao:rank:uid-info:(\d{9,10})/.exec(key)
       if (qq && uidType && uidRet?.[1]) {
         add(qq, uidRet[1], uidType === 'ck' ? 'ck' : 'bind')
       }
@@ -291,6 +307,13 @@ export default class ProfileRank {
   }
 
   key (profile, type) {
+    // 特殊处理开拓者的情况
+    let profileIdMap = {
+      8002: 8001,
+      8004: 8003,
+      8006: 8005
+    }
+    if (profileIdMap[profile.id]) { return `miao:rank:${this.groupId}:${type}:${profileIdMap[profile.id]}` }
     return `miao:rank:${this.groupId}:${type}:${profile.id}`
   }
 
@@ -337,7 +360,8 @@ export default class ProfileRank {
       }
     }
     if (value && !lodash.isUndefined(value.score)) {
-      await redis.zAdd(typeKey, { score: value.score, value: this.uid })
+      let tmpScore = value.score.toString().replaceAll('%', '')
+      await redis.zAdd(typeKey, { score: tmpScore, value: this.uid })
     }
     if (!lodash.isNumber(rank)) {
       rank = await redis.zRevRank(typeKey, this.uid)
@@ -398,7 +422,8 @@ export default class ProfileRank {
       }
     }
     if (type === 'dmg' && profile.hasDmg) {
-      let dmg = await profile.calcDmg({ mode: 'single' })
+      let enemyLv = profile.game === 'gs' ? 91 : 80
+      let dmg = await profile.calcDmg({ enemyLv, mode: 'single' })
       if (dmg && dmg.avg) {
         return {
           score: dmg.avg,
@@ -408,6 +433,4 @@ export default class ProfileRank {
     }
     return false
   }
-
-
 }

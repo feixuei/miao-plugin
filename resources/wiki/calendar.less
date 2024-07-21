@@ -1,4 +1,4 @@
-//linear-gradient(to right, rgba(232, 226, 216, 1), rgba(232, 226, 216, 1) 80%, rgba(232, 226, 216, 0) 100%);
+// linear-gradient(to right, rgba(232, 226, 216, 1), rgba(232, 226, 216, 1) 80%, rgba(232, 226, 216, 0) 100%);
 
 .linear-bg(@color) {
   background-image: linear-gradient(to right, @color, @color 80%, fade(@color, 0) 100%);
@@ -195,7 +195,6 @@ body {
       right: -10px;
       background-size: 100% auto;
       background-position: left 40%;
-
     }
 
     strong {
@@ -215,7 +214,6 @@ body {
 
       .info {
         padding-left: 65px;
-
       }
 
       .character-img {
@@ -224,7 +222,6 @@ body {
         bottom: 0;
         left: 0;
         z-index: 10;
-
       }
     }
 
@@ -240,7 +237,6 @@ body {
         display: none;
       }
 
-
       &:first-of-type {
         margin-top: 20px;
       }
@@ -252,7 +248,6 @@ body {
       }
 
       .cal-icon {
-
         width: 23px;
         height: 23px;
         top: 6px;
@@ -268,12 +263,10 @@ body {
         padding-left: 38px;
       }
 
-
       strong,
       span {
         display: inline;
       }
-
 
       &.small-mode span {
         display: block;
@@ -320,8 +313,6 @@ body {
   .type-weapon.li-idx-2 {
     margin-top: -82px;
   }
-
-
 }
 
 .calendar .now-line {
@@ -380,16 +371,36 @@ body {
   height: 80px;
   position: relative;
 
-  .cal-item {
-    border-radius: 0;
+  .type-abyss {
     background: url("./imgs/abyss.jpg") #333465 top right no-repeat;
-    position: absolute;
-
     .info {
       background: none;
       color: rgba(211, 188, 141, 1);
       .linear-bg(#333465);
     }
+  }
+
+  .type-abyss-1 {
+    background: url("./imgs/abyss-1.jpg") #0f0829 top right no-repeat;
+    .info {
+        background: none;
+        color: rgba(211, 188, 141, 1);
+        .linear-bg(#0f0829);
+    }
+  }
+
+  .type-abyss-2 {
+    background: url("./imgs/abyss-2.jpg") #16202a top right no-repeat;
+    .info {
+        background: none;
+        color: rgba(211, 188, 141, 1);
+        .linear-bg(#16202a);
+    }
+  }
+
+  .cal-item {
+    border-radius: 0;
+    position: absolute;
 
     &:before {
       content: "";
@@ -401,7 +412,6 @@ body {
       position: absolute;
       background: #d3bc8d;
       z-index: 8;
-
     }
 
     &:after {

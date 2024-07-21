@@ -122,7 +122,7 @@ const buffs = {
   冰风迷途的勇士: {
     2: attr('dmg', 15, '冰'),
     4: {
-      check: ({ element }) => element === '冰',
+      check: ({ element, mastery }) => element === '冰' && mastery != 'melt',
       title: '攻击处于冰元素影响下的敌人时，暴击率提高20%',
       data: {
         cpct: 20
@@ -284,9 +284,10 @@ const buffs = {
   千岩牢固: {
     2: attr('hpPct', 20),
     4: {
-      title: '元素战技命中敌人后，攻击力提升20%',
+      title: '元素战技命中敌人后，攻击力提升[atkPct]%，护盾强效提升[shield]%',
       data: {
-        atkPct: 20
+        atkPct: 20,
+        shield: 30
       }
     }
   },
@@ -356,7 +357,7 @@ const buffs = {
       title: '触发提高普攻[aPlus]伤害',
       sort: 9,
       data: {
-        aPlus: ({ attr }) => (attr.atk.base + attr.atk.plus + attr.atk.pct * attr.atk.base / 100) * 0.35
+        aPlus: ({ attr }) => attr.atk * 0.35
       }
     }
   },
@@ -375,9 +376,12 @@ const buffs = {
   饰金之梦: {
     2: attr('mastery', 80),
     4: {
-      title: '队伍存在其他3个不同元素类型角色时，精通提高150',
+      title: '队伍存在[mArtisDiffCount]个不同元素类型角色，[sameCount]个相同类型角色，精通提高[mastery]，攻击力提高[atkPct]%',
       data: {
-        mastery: 150
+        mArtisDiffCount: ({ params }) => params.mArtisDiffCount || 3,
+        sameCount: ({ params }) => 3 - (params.mArtisDiffCount || 3),
+        mastery: ({ params }) => (params.mArtisDiffCount || 3) * 50,
+        atkPct: ({ params }) => (3 - (params.mArtisDiffCount || 3)) * 14
       }
     }
   },
@@ -465,17 +469,17 @@ const buffs = {
       title: '触发后，普通攻击、重击、下落攻击、元素战技与元素爆发伤害提高1200',
       sort: 9,
       data: {
-        aPlus: 1200 ,
-        a2Plus: 1200 ,
-        a3Plus: 1200 ,
-        ePlus: 1200 ,
+        aPlus: 1200,
+        a2Plus: 1200,
+        a3Plus: 1200,
+        ePlus: 1200,
         qPlus: 1200
       }
     }
   },
 
   回声之林夜话: {
-    2: attr('atkPct', 18 ),
+    2: attr('atkPct', 18),
     4: {
       check: ({ element }) => element === '岩',
       title: '施放元素战技后，岩元素伤害加成提升50%',
@@ -483,7 +487,28 @@ const buffs = {
         dmg: 50
       }
     }
+  },
+
+  谐律异想断章: {
+    2: attr('atkPct', 18),
+    4: {
+      title: '生命之契的数值提升或降低时，角色造成的伤害提升[dmg]%',
+      data: {
+        dmg: 18 * 3
+      }
+    }
+  },
+
+  未竟的遐思: {
+    2: attr('atkPct', 18),
+    4: {
+      title: '存在处于燃烧状态下的敌人时，伤害提升[dmg]%',
+      data: {
+        dmg: 10 * 5
+      }
+    }
   }
+
 }
 
 export default buffs

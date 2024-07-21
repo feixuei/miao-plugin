@@ -2,7 +2,8 @@ import lodash from 'lodash'
 import { getTargetUid, getProfileRefresh } from './ProfileCommon.js'
 import ProfileList from './ProfileList.js'
 import { Cfg, Common, Data, Format } from '#miao'
-import { MysApi, ProfileRank, Character, Weapon, Artifact } from '#miao.models'
+import { Button, MysApi, ProfileRank, Character, Weapon, Artifact } from '#miao.models'
+
 import ProfileChange from './ProfileChange.js'
 import { profileArtis } from './ProfileArtis.js'
 import { ProfileWeapon } from './ProfileWeapon.js'
@@ -125,7 +126,7 @@ let ProfileDetail = {
     let selfUser = await MysApi.initUser(e)
 
     if (!selfUser) {
-      e.reply('尚未绑定UID')
+      e.reply(['尚未绑定UID', new Button(e).bindUid()])
       return true
     }
 
@@ -207,21 +208,29 @@ let ProfileDetail = {
         treeData[pos].push(tmp)
         treeMap[idx + 201 + ''] = tmp
       })
+      // 属性建成后图标替换
+      lodash.forEach(Object.keys(char.detail.tree), (id) => {
+        let ret = /([12][01][0-9])$/.exec(id + '')
+        if (ret && ret[1]) {
+          let treeId = ret[1]
+          if (treeId[0] === '2') {
+            treeMap[treeId].img = `/meta-sr/public/icons/tree-${char.detail?.tree?.[id]?.key}.webp`
+          }
+        }
+      })
       // 能力
       lodash.forEach([2, 4, 6], (pos, idx) => {
         let tmp = { type: 'talent', img: data.imgs[`tree${idx + 1}`] }
         treeData[pos] = tmp
         treeMap[idx + 101 + ''] = tmp
       })
+      // 点亮图标
       lodash.forEach(profile.trees, (id) => {
         let ret = /([12][01][0-9])$/.exec(id + '')
         if (ret && ret[1]) {
           let treeId = ret[1]
           if (treeMap?.[treeId]) {
             treeMap[treeId].value = 1
-          }
-          if (treeId[0] === '2') {
-            treeMap[treeId].img = `/meta-sr/public/icons/tree-${char.detail?.tree?.[id]?.key}.webp`
           }
         }
       })
@@ -244,7 +253,7 @@ let ProfileDetail = {
       changeProfile: e._profileMsg
     }
     // 渲染图像
-    let msgRes = await Common.render('character/profile-detail', renderData, { e, scale: 1.6, retMsgId: true })
+    const msgRes = await e.reply([await Common.render('character/profile-detail', renderData, { e, scale: 1.6, retType: 'base64' }), new Button(e).profile(char, uid)])
     if (msgRes) {
       // 如果消息发送成功，就将message_id和图片路径存起来，3小时过期
       const message_id = [e.message_id]

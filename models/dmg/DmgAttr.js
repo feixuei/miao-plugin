@@ -30,7 +30,7 @@ let DmgAttr = {
       })
     })
 
-    lodash.forEach((game === 'gs' ? 'mastery,recharge,cpct,cdmg,heal,dmg,phy' : 'speed,recharge,cpct,cdmg,heal,dmg,enemyDmg,effPct,effDef,stance').split(','), (key) => {
+    lodash.forEach((game === 'gs' ? 'mastery,recharge,cpct,cdmg,heal,dmg,phy' : 'speed,recharge,cpct,cdmg,heal,dmg,enemydmg,effPct,effDef,stance').split(','), (key) => {
       ret[key] = AttrItem.create(originalAttr?.[key] || {
         base: attr[key] * 1 || 0, // 基础值
         plus: 0, // 加成值
@@ -40,7 +40,7 @@ let DmgAttr = {
     })
 
     // 技能属性记录
-    lodash.forEach((game === 'gs' ? 'a,a2,a3,e,q' : 'a,a2,a3,e,e2,q,q2,t').split(','), (key) => {
+    lodash.forEach((game === 'gs' ? 'a,a2,a3,e,q' : 'a,a2,a3,e,e2,q,q2,t,dot,break').split(','), (key) => {
       ret[key] = ret[key] || {
         pct: 0, // 倍率加成
         multi: 0, // 独立倍率乘区加成，宵宫E等
@@ -79,6 +79,7 @@ let DmgAttr = {
         ret.vaporize = 0 // 蒸发
         ret.melt = 0 // 融化
         ret.burning = 0 // 燃烧
+        ret.crystallize = 0 // 结晶
         ret.superConduct = 0 // 超导
         ret.swirl = 0 // 扩散
         ret.electroCharged = 0 // 感电
@@ -91,12 +92,11 @@ let DmgAttr = {
         ret.spread = 0 // 蔓激化
         ret.fykx = 0 // 敌人反应抗性降低
       } else if (game === 'sr') {
-        // 技能持续伤害与弱点击破持续伤害
-        ret.dot = {
-          dmg: 0, // 伤害提高
-          enemydmg: 0 // 承受伤害提高
-        }
         ret.sp = char.sp * 1
+        // 超击破
+        ret.superBreak = {
+          ignore: 0 // 无视防御
+        }
       }
     }
     return ret
@@ -110,7 +110,6 @@ let DmgAttr = {
       params,
       refine: attr.refine,
       weaponTypeName: attr.weaponTypeName,
-      weapon: attr.weapon,
       element: Format.elemName(attr.element) || attr.element, // 计算属性
       calc: DmgAttr.getAttrValue
     }
@@ -130,7 +129,10 @@ let DmgAttr = {
       let aCfg = attrMap[reduceAttr]
       attr[reduceAttr][aCfg.calc] -= aCfg.value
     }
-
+    
+    lodash.forEach(buffs, (buff) => {
+      meta.mastery = meta.mastery || buff.mastery // 先反应
+    })
     lodash.forEach(buffs, (buff) => {
       let ds = DmgAttr.getDs(attr, meta, params)
 
@@ -189,19 +191,19 @@ let DmgAttr = {
         if (lodash.isFunction(val)) {
           val = val(ds)
         }
-        if (!val) {
+        if (!val && val !== 0) {
           return
         }
 
         title = title.replace(`[${key}]`, Format.comma(val, 1))
 
         // 技能提高
-        let tRet = /^(a|a2|a3|e|q|t)(Def|Ignore|Dmg|Plus|Pct|Cpct|Cdmg|Multi)$/.exec(key)
+        let tRet = /^(a|a2|a3|e|q|t|dot|break)(Def|Ignore|Dmg|Enemydmg|Plus|Pct|Cpct|Cdmg|Multi)$/.exec(key)
         if (tRet) {
           attr[tRet[1]][tRet[2].toLowerCase()] += val * 1 || 0
           return
         }
-        let aRet = /^(hp|def|atk|mastery|cpct|cdmg|heal|recharge|dmg|phy|shield|speed)(Plus|Pct|Inc)?$/.exec(key)
+        let aRet = /^(hp|def|atk|mastery|cpct|cdmg|heal|recharge|dmg|enemydmg|phy|shield|speed|stance)(Plus|Pct|Inc)?$/.exec(key)
         if (aRet) {
           attr[aRet[1]][aRet[2] ? aRet[2].toLowerCase() : 'plus'] += val * 1 || 0
           return
@@ -215,14 +217,14 @@ let DmgAttr = {
           return
         }
 
-        if (['vaporize', 'melt', 'burning', 'superConduct', 'swirl', 'electroCharged', 'shatter', 'overloaded', 'bloom', 'burgeon', 'hyperBloom', 'aggravate', 'spread', 'kx', 'fykx'].includes(key)) {
+        if (['vaporize', 'melt', 'crystallize', 'burning', 'superConduct', 'swirl', 'electroCharged', 'shatter', 'overloaded', 'bloom', 'burgeon', 'hyperBloom', 'aggravate', 'spread', 'kx', 'fykx', 'multi'].includes(key)) {
           attr[key] += val * 1 || 0
           return
         }
 
-        let dRet = /^(dot)(Dmg|EnemyDmg)$/.exec(key)
-        if (dRet) {
-          attr[dRet[1]][dRet[2].toLowerCase()] += val * 1 || 0
+        let sRet = /^(superBreak)(Ignore)$/.exec(key)
+        if (sRet) {
+          attr[sRet[1]][sRet[2].toLowerCase()] += val * 1 || 0
         }
       })
       msg.push(title)

@@ -4,7 +4,7 @@ export default function (step, staticStep) {
       title: '元素战技造成的伤害值提高[ePlus]',
       sort: 9,
       data: {
-        ePlus: ({ attr, calc, refine }) => calc(attr.def) * step(40)[refine] / 100
+        ePlus: ({ attr, refine }) => attr.def * step(40)[refine] / 100
       }
     },
     腐殖之剑: {
@@ -246,6 +246,19 @@ export default function (step, staticStep) {
       title: '其他角色生命值变化时，2层Buff提高生命上限[hpPct]%',
       refine: {
         hpPct: step(14 * 2)
+      }
+    }],
+    有乐御簾切: [staticStep('defPct', 20), {
+      title: '附近的角色在场上造成岩元素伤害后，普通攻击伤害提升[aDmg]%，元素战伤害提升[eDmg]%；',
+      refine: {
+        aDmg: step(16 * 2),
+        eDmg: step(24 * 2)
+      }
+    }],
+    赦罪: [staticStep('cdmg', 20), {
+      title: '生命之契的数值增加时，装备者造成的伤害提升[dmg]%',
+      refine: {
+        dmg: step(16 * 3)
       }
     }]
   }

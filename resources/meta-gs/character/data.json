@@ -1384,7 +1384,11 @@
     "star": 4,
     "elem": "pyro",
     "weapon": "claymore",
-    "talentId": {},
+    "talentId": {
+      "10921": "a",
+      "10922": "e",
+      "10925": "q"
+    },
     "talentCons": {
       "a": 0,
       "e": 3,
@@ -1399,13 +1403,122 @@
     "star": 5,
     "elem": "anemo",
     "weapon": "catalyst",
-    "talentId": {},
+    "talentId": {
+      "10931": "a",
+      "10932": "e",
+      "10935": "q"
+    },
     "talentCons": {
       "a": 0,
       "e": 5,
       "q": 3
     },
     "eta": 1706666400000
+  },
+  "10000094": {
+    "id": 10000094,
+    "name": "千织",
+    "abbr": "千织",
+    "star": 5,
+    "elem": "geo",
+    "weapon": "sword",
+    "talentId": {},
+    "talentCons": {
+      "a": 0,
+      "e": 3,
+      "q": 5
+    },
+    "eta": 1710295200000
+  },
+  "10000095": {
+    "id": 10000095,
+    "name": "希格雯",
+    "abbr": "希格雯",
+    "star": 5,
+    "elem": "hydro",
+    "weapon": "bow",
+    "talentId": {
+      "10951": "a",
+      "10952": "e",
+      "10955": "q"
+    },
+    "talentCons": {
+      "a": 0,
+      "e": 3,
+      "q": 5
+    },
+    "eta": 1717552800000
+  },
+  "10000096": {
+    "id": 10000096,
+    "name": "阿蕾奇诺",
+    "abbr": "仆人",
+    "star": 5,
+    "elem": "pyro",
+    "weapon": "polearm",
+    "talentId": {},
+    "talentCons": {
+      "a": 3,
+      "e": 0,
+      "q": 5
+    },
+    "eta": 1713924000000
+  },
+  "10000097": {
+    "id": 10000097,
+    "name": "赛索斯",
+    "abbr": "赛索斯",
+    "star": 4,
+    "elem": "electro",
+    "weapon": "bow",
+    "talentId": {
+      "10971": "a",
+      "10972": "e",
+      "10975": "q"
+    },
+    "talentCons": {
+      "a": 3,
+      "e": 0,
+      "q": 5
+    },
+    "eta": 1717552800000
+  },
+  "10000098": {
+    "id": 10000098,
+    "name": "克洛琳德",
+    "abbr": "琳德",
+    "star": 5,
+    "elem": "electro",
+    "weapon": "sword",
+    "talentId": {
+      "10981": "a",
+      "10982": "e",
+      "10985": "q"
+    },
+    "talentCons": {
+      "a": 0,
+      "e": 3,
+      "q": 5
+    },
+    "eta": 1717552800000
+  },
+  "10000099": {
+    "id": 10000099,
+    "name": "艾梅莉埃",
+    "abbr": "艾梅莉埃",
+    "star": 5,
+    "elem": "dendro",
+    "weapon": "polearm",
+    "talentId": {
+      "10991": "a",
+      "10992": "e",
+      "10995": "q"
+    },
+    "talentCons": {
+      "a": 0,
+      "e": 3,
+      "q": 5
+    }
   },
   "20000000": {
     "id": 20000000,

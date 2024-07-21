@@ -12,7 +12,7 @@ export default {
   },
   野穗伴行的快枪手: {
     2: attr('atkPct', 12),
-    4: [attr('speed', 6), {
+    4: [attr('speedPct', 6), {
       title: '普攻伤害提高10%',
       data: {
         aDmg: 10
@@ -93,9 +93,9 @@ export default {
   宝命长存的莳者: {
     2: attr('hpPct', 12),
     4: {
-      title: '消耗生命2层提高暴击率12%',
+      title: '消耗生命2层提高暴击率16%',
       data: {
-        cpct: 12
+        cpct: 16
       }
     }
   },
@@ -127,7 +127,7 @@ export default {
     }]
   },
   泛银河商业公司: {
-    2: [attr('effPct', 12), {
+    2: [attr('effPct', 10), {
       title: '基于效果命中提高攻击力[atkPct]%',
       data: {
         atkPct: ({ calc, attr }) => Math.min(25, calc(attr.effPct) / 4 || 0)
@@ -135,7 +135,7 @@ export default {
     }]
   },
   筑城者的贝洛伯格: {
-    2: [attr('defPct', 12), {
+    2: [attr('defPct', 15), {
       title: '效果命中大于50%时，提高防御力15%',
       check: ({ calc, attr }) => calc(attr.effPct) > 50,
       data: {
@@ -228,6 +228,88 @@ export default {
       title: '同属性角色伤害提高10%',
       data: {
         dmg: 10
+      }
+    }]
+  },
+  死水深潜的先驱: {
+    2: {
+      title: '对受负面状态影响的敌人造成伤害提高[dmg]%',
+      data: {
+        dmg: 12
+      }
+    },
+    4: [attr('cpct', 4), {
+      title: '对陷入不少于3个负面效果的敌方目标造成的暴击率额外提高[cpct]%，暴击伤害提高[cdmg]%',
+      data: {
+        cpct: 4,
+        cdmg: 24
+      }
+    }]
+  },
+  机心戏梦的钟表匠: {
+    2: attr('stance', 16),
+    4: {
+      title: '装备者对我方释放终结技时，我方全体击破特攻提高[stance]%',
+      data: {
+        stance: 30
+      }
+    }
+  },
+  无主荒星茨冈尼亚: {
+    2: [attr('cpct', 4), {
+      title: '敌方目标被消灭提高暴击伤害，至多提高[cdmg]%',
+      data: {
+        cdmg: 40
+      }
+    }]
+  },
+  出云显世与高天神国: {
+    2: [attr('atkPct', 12), {
+      title: '存在一名与装备者命途相同的队友时，暴击率提高[cpct]%',
+      data: {
+        cpct: 12
+      }
+    }]
+  },
+  荡除蠹灾的铁骑: {
+    2: attr('stance', 16),
+    4: [{
+      title: '基于击破特攻，造成的击破伤害无视敌方[breakIgnore]%防御',
+      sort: 9,
+      data: {
+        breakIgnore: ({ attr }) => attr.stance >= 150 ? 10 : 0
+      }
+    }, {
+      title: '基于击破特攻，造成的超击破伤害无视敌方[superBreakIgnore]%防御',
+      sort: 9,
+      data: {
+        superBreakIgnore: ({ attr }) => attr.stance >= 250 ? 15 : 0
+      }
+    }]
+  },
+  风举云飞的勇烈: {
+    2: attr('atkPct', 12),
+    4: [attr('cpct', 6), {
+      title: '施放追加攻击使终结技伤害提高[qDmg]%',
+      data: {
+        qDmg: 36
+      }
+    }]
+  },
+  奔狼的都蓝王朝: {
+    2: {
+      title: '5层Buff使得装备者造成的追击伤害提高[tDmg]%，装备者的暴击伤害提高[cdmg]%',
+      data: {
+        tDmg: 25,
+        cdmg: 25
+      }
+    }
+  },
+  劫火莲灯铸炼宫: {
+    2: [attr('speedPct', 6), {
+      title: '击中火弱点的敌方时，击破特攻提高[stance]%',
+      data: {
+        stance: 40
       }
     }]
   }

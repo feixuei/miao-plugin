@@ -1,8 +1,9 @@
 /*
 * 伤害计算 - 计算伤害
 * */
-import { eleBaseDmg, erTitle, breakBaseDmg } from './DmgCalcMeta.js'
+import { eleBaseDmg, erTitle, breakBaseDmg, cryBaseDmg } from './DmgCalcMeta.js'
 import DmgMastery from './DmgMastery.js'
+import lodash from 'lodash'
 
 let DmgCalc = {
   calcRet (fnArgs = {}, data = {}) {
@@ -19,7 +20,7 @@ let DmgCalc = {
       dynamicPhy = 0, // 动态物伤
       dynamicCpct = 0, // 动态暴击率
       dynamicCdmg = 0, // 动态暴击伤害
-      dynamicEnemyDmg = 0 // 动态易伤
+      dynamicEnemydmg = 0 // 动态易伤
     } = dynamicData
     let {
       ds, // 数据集
@@ -31,7 +32,7 @@ let DmgCalc = {
     } = data
     let calc = ds.calc
 
-    let { atk, dmg, phy, cdmg, cpct, enemyDmg } = attr
+    let { atk, dmg, phy, cdmg, cpct, enemydmg } = attr
 
     // 攻击区
     let atkNum = calc(atk)
@@ -47,9 +48,9 @@ let DmgCalc = {
     }
 
     // 易伤区
-    let enemyDmgNum = 1
+    let enemydmgNum = 1
     if (game === 'sr') {
-      enemyDmgNum = 1 + enemyDmg.base / 100 + enemyDmg.plus / 100 + dynamicEnemyDmg / 100
+      enemydmgNum = 1 + enemydmg.base / 100 + enemydmg.plus / 100 + dynamicEnemydmg / 100
     }
 
     // 暴击区
@@ -63,20 +64,28 @@ let DmgCalc = {
 
     let plusNum = 0
 
-    if (talent && attr[talent]) {
-      pctNum = pctNum / 100
+    pctNum = pctNum / 100
+    if (talent) {
+      lodash.forEach(talent.split(','), (t) => {
+        if (attr[t]) {
+          let ds = attr[t]
 
-      let ds = attr[talent]
+          pctNum += ds.pct / 100
+          dmgNum += ds.dmg / 100
+          enemydmgNum += game === 'gs' ? 0 : ds.enemydmg / 100
+          cpctNum += ds.cpct / 100
+          cdmgNum += ds.cdmg / 100
+          enemyDef += ds.def / 100
+          enemyIgnore += ds.ignore / 100
+          multiNum += ds.multi / 100
+          plusNum += ds.plus
+        }
+      })
+    }
 
-      pctNum += ds.pct / 100
-      dmgNum += ds.dmg / 100
-      enemyDmgNum += game === 'gs' ? 0 : ds.enemydmg / 100
-      cpctNum += ds.cpct / 100
-      cdmgNum += ds.cdmg / 100
-      enemyDef += ds.def / 100
-      enemyIgnore += ds.ignore / 100
-      multiNum += ds.multi / 100
-      plusNum += ds.plus
+    // TODO
+    if (ele === 'superBreak') {
+      enemyIgnore += attr.superBreak.ignore / 100
     }
 
     // 防御区
@@ -125,16 +134,9 @@ let DmgCalc = {
       eleBase = isEle ? 1 + attr[ele] / 100 + DmgMastery.getMultiple(ele, calc(attr.mastery)) : 1
     }
 
-    let breakDotBase = 1
     let stanceNum = 1
     if (game === 'sr') {
       switch (ele) {
-        case 'skillDot': {
-          pctNum = pctNum / 100
-          dmgNum += attr.dot.dmg / 100
-          enemyDmgNum += attr.dot.enemydmg / 100
-          break
-        }
         case 'shock':
         case 'burn':
         case 'windShear':
@@ -146,10 +148,10 @@ let DmgCalc = {
         case 'physicalBreak':
         case 'quantumBreak':
         case 'imaginaryBreak':
-        case 'iceBreak': {
+        case 'iceBreak':
+        case 'superBreak':{
           eleNum = DmgMastery.getBasePct(ele, attr.element)
           stanceNum = 1 + calc(attr.stance) / 100
-          enemyDmgNum += attr.dot.enemydmg / 100
           break
         }
         default:
@@ -184,6 +186,12 @@ let DmgCalc = {
         break
       }
 
+      case 'crystallize': {
+        eleBase *= cryBaseDmg[level]
+        ret = { avg: eleBase * (calc(attr.shield) / 100) * (attr.shield.inc / 100) }
+        break
+      }
+
       case 'aggravate':
       case 'spread': {
         eleBase *= eleBaseDmg[level]
@@ -198,15 +206,18 @@ let DmgCalc = {
       // 技能持续伤害 = 伤害值乘区 * 增伤区 * 易伤区 * 防御区 * 抗性区 * 减伤区
       case 'skillDot': {
         ret = {
-          avg: dmgBase * dmgNum * enemyDmgNum * defNum * kNum * dmgReduceNum
+          avg: dmgBase * dmgNum * enemydmgNum * defNum * kNum * dmgReduceNum
         }
         break
       }
 
-      // 未计算层数(风化、纠缠)和韧性条系数(击破、纠缠)
-      // 常规击破伤害均需要计算减伤区（即按韧性条存在处理） 特例：阮梅终结技/秘技击破伤害不计算减伤
+      // 未计算：1. 层数(风化、纠缠) 2. 韧性条系数(击破、纠缠) 3. 削韧值(超击破)、超击破伤害提高
+      // 常规击破伤害均需要计算减伤区（即按韧性条存在处理） 特例：阮梅终结技/秘技击破伤害不计算减伤/波提欧
       // 击破伤害 = 基础伤害 * 属性击破伤害系数 * (1+击破特攻%) * 易伤区 * 防御区 * 抗性区 * 减伤区 * (敌方韧性+2)/4 * 层数系数
       // 击破持续伤害 = 基础伤害 * 属性持续伤害系数 * (1+击破特攻%) * 易伤区 * 防御区 * 抗性区 * 减伤区 * 层数系数
+      // 超击破伤害 = 基础伤害 * (1+击破特攻%) * 易伤区 * 防御区 * 抗性区 * 减伤区 * (1+超击破伤害提高) * 技能最终削韧值
+      // 技能最终削韧值 = 技能基础削韧值 ×（1＋削韧值提高）×（1＋弱点击破效率提高）
+      // 超击破伤害提高 截至2.2版本该乘区仅能由同谐开拓者提供，与常规增伤区无关，暂时只在calc.js中手动计算
       case 'shock':
       case 'burn':
       case 'windShear':
@@ -216,27 +227,29 @@ let DmgCalc = {
       case 'fireBreak':
       case 'windBreak':
       case 'physicalBreak':
-      case 'quantumBreak' :
+      case 'quantumBreak':
       case 'imaginaryBreak':
-      case 'iceBreak': {
-        breakDotBase *= breakBaseDmg[level]
+      case 'iceBreak':
+      case 'superBreak': {
+        let breakBase = 1
+        breakBase *= breakBaseDmg[level]
         ret = {
-          avg: breakDotBase * eleNum * stanceNum * enemyDmgNum * defNum * kNum * dmgReduceNum
+          avg: breakBase * eleNum * stanceNum * enemydmgNum * defNum * kNum * dmgReduceNum
         }
         break
       }
 
       default: {
         ret = {
-          dmg: dmgBase * dmgNum * enemyDmgNum * (1 + cdmgNum) * defNum * kNum * dmgReduceNum,
-          avg: dmgBase * dmgNum * enemyDmgNum * (1 + cpctNum * cdmgNum) * defNum * kNum * dmgReduceNum
+          dmg: dmgBase * dmgNum * enemydmgNum * (1 + cdmgNum) * defNum * kNum * dmgReduceNum,
+          avg: dmgBase * dmgNum * enemydmgNum * (1 + cpctNum * cdmgNum) * defNum * kNum * dmgReduceNum
         }
       }
     }
 
     if (showDetail) {
       console.log('Attr', attr)
-      console.log({ mode, dmgBase, atkNum, pctNum, multiNum, plusNum, dmgNum, enemyDmgNum, stanceNum, cpctNum, cdmgNum, defNum, eleNum, kNum, dmgReduceNum })
+      console.log({ mode, dmgBase, atkNum, pctNum, multiNum, plusNum, dmgNum, enemydmgNum, stanceNum, cpctNum, cdmgNum, defNum, eleNum, kNum, dmgReduceNum })
       console.log('Ret', ret)
     }
 
@@ -261,8 +274,32 @@ let DmgCalc = {
       return dmgFn(0, talent, ele, basicNum, 'basic', dynamicData)
     }
 
-    dmgFn.reaction = function (ele = false) {
-      return dmgFn(0, 'fy', ele, 0, 'basic')
+    dmgFn.reaction = function (ele = false, talent = 'fy') {
+      switch (ele) {
+        // 击破持续伤害
+        case 'shock':
+        case 'burn':
+        case 'windShear':
+        case 'bleed': {
+          talent = 'dot'
+          break
+        }
+        // 击破伤害
+        case 'superBreak':
+        case 'lightningBreak':
+        case 'fireBreak':
+        case 'windBreak':
+        case 'physicalBreak':
+        case 'quantumBreak':
+        case 'imaginaryBreak':
+        case 'iceBreak': {
+          talent = 'break'
+          break
+        }
+        default:
+          break
+      }
+      return dmgFn(0, talent, ele, 0, 'basic')
     }
 
     dmgFn.dynamic = function (pctNum = 0, talent = false, dynamicData = false, ele = false) {

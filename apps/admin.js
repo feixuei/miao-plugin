@@ -2,7 +2,10 @@ import fs from 'node:fs'
 import lodash from 'lodash'
 import { exec } from 'child_process'
 import { Cfg, Common, Data, Version, App } from '#miao'
+import makemsg from '../../../lib/common/common.js'
+import { execSync } from 'child_process'
 import fetch from 'node-fetch'
+import { miaoPath } from '#miao.path'
 
 let keys = lodash.map(Cfg.getCfgSchemaMap(), (i) => i.key)
 let app = App.init({
@@ -24,6 +27,11 @@ app.reg({
     fn: updateMiaoPlugin,
     desc: '【#管理】喵喵更新'
   },
+  updatelog: {
+    rule: /^#?喵喵更新日志$/,
+    fn: Miaoupdatelog,
+    desc: '【#管理】喵喵更新'
+  },
   sysCfg: {
     rule: sysCfgReg,
     fn: sysCfg,
@@ -38,8 +46,7 @@ app.reg({
 
 export default app
 
-const _path = process.cwd()
-const resPath = `${_path}/plugins/miao-plugin/resources/`
+const resPath = `${miaoPath}/resources/`
 const plusPath = `${resPath}/miao-res-plus/`
 
 const checkAuth = async function (e) {
@@ -148,7 +155,7 @@ async function updateMiaoPlugin (e) {
   } else {
     e.reply('正在执行更新操作，请稍等')
   }
-  exec(command, { cwd: `${_path}/plugins/miao-plugin/` }, function (error, stdout, stderr) {
+  exec(command, { cwd: miaoPath }, function (error, stdout, stderr) {
     if (/(Already up[ -]to[ -]date|已经是最新的)/.test(stdout)) {
       e.reply('目前已经是最新版喵喵了~')
       return true
@@ -182,6 +189,35 @@ async function updateMiaoPlugin (e) {
     }, 1000)
   })
   return true
+}
+
+async function Miaoupdatelog (e, plugin = 'miao-plugin') {
+  let cm = 'git log  -20 --oneline --pretty=format:"%h||[%cd]  %s" --date=format:"%F %T"'
+  if (plugin) {
+    cm = `cd ./plugins/${plugin}/ && ${cm}`
+  }
+  let logAll
+  try {
+    logAll = await execSync(cm, { encoding: 'utf-8', windowsHide: true })
+  } catch (error) {
+    logger.error(error.toString())
+    this.reply(error.toString())
+  }
+  if (!logAll) return false
+  logAll = logAll.split('\n')
+  let log = []
+  for (let str of logAll) {
+    str = str.split('||')
+    if (str[0] == this.oldCommitId) break
+    if (str[1].includes('Merge branch')) continue
+    log.push(str[1])
+  }
+  let line = log.length
+  log = log.join('\n\n')
+  if (log.length <= 0) return ''
+  let end = '更多详细信息，请前往gitee查看\nhttps://gitee.com/yoimiya-kokomi/miao-plugin'
+  log = await makemsg.makeForwardMsg(this.e, [log, end], `${plugin}更新日志，共${line}条`)
+  e.reply(log)
 }
 
 async function miaoApiInfo (e) {

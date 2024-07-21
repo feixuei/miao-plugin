@@ -6,6 +6,7 @@ import DmgBuffs from './dmg/DmgBuffs.js'
 import DmgAttr from './dmg/DmgAttr.js'
 import DmgCalc from './dmg/DmgCalc.js'
 import { MiaoError, Meta, Common } from '#miao'
+import { miaoPath } from '#miao.path'
 
 export default class ProfileDmg extends Base {
   constructor (profile = {}, game = 'gs') {
@@ -13,21 +14,20 @@ export default class ProfileDmg extends Base {
     this.profile = profile
     this.game = game
     this._update = profile._update
-    if (profile && profile.id) {
-      let { id } = profile
-      this.char = Character.get(id)
+    if (profile && profile.id && profile.elem) {
+      let { id, elem } = profile
+      this.char = Character.get({ id, elem })
     }
   }
 
   static dmgRulePath (name, game = 'gs') {
-    const _path = process.cwd()
     let dmgFile = [
       { file: 'calc_user', name: '自定义伤害' },
       { file: 'calc_auto', name: '组团伤害', test: () => Common.cfg('teamCalc') },
       { file: 'calc', name: '喵喵' }
     ]
     for (let ds of dmgFile) {
-      let path = `${_path}/plugins/miao-plugin/resources/meta-${game}/character/${name}/${ds.file}.js`
+      let path = `${miaoPath}/resources/meta-${game}/character/${name}/${ds.file}.js`
       if (ds.test && !ds.test()) {
         continue
       }
@@ -87,7 +87,7 @@ export default class ProfileDmg extends Base {
 
   async getCalcRule () {
     let ruleName = this.char?.name
-    if (['空', '荧'].includes(ruleName)) {
+    if ([10000005, 10000007].includes(this.char.id * 1)) {
       ruleName = `旅行者/${this.profile.elem}`
     }
     const cfgPath = ProfileDmg.dmgRulePath(ruleName, this.char?.game)
@@ -131,12 +131,15 @@ export default class ProfileDmg extends Base {
       level: profile.level,
       cons: profile.cons * 1,
       talent,
-      trees: this.trees()
+      trees: this.trees(),
+      weapon: profile.weapon
     }
 
     let { id, weapon, attr, artis } = profile
 
-    defParams = defParams || {}
+    defDmgKey = lodash.isFunction(defDmgKey) ? defDmgKey(meta) : defDmgKey
+    defDmgIdx = lodash.isFunction(defDmgIdx) ? defDmgIdx(meta) : defDmgIdx
+    defParams = lodash.isFunction(defParams) ? defParams(meta) : defParams || {}
 
     let originalAttr = DmgAttr.getAttr({ id, weapon, attr, char: this.char, game, sp })
 
@@ -176,7 +179,7 @@ export default class ProfileDmg extends Base {
         let ds = lodash.merge({ talent }, DmgAttr.getDs(attr, meta))
         detail = detail({ ...ds, attr, profile })
       }
-      let params = lodash.merge({}, defParams, detail?.params || {})
+      let params = lodash.merge({}, defParams, lodash.isFunction(detail?.params) ? detail?.params(meta) : detail?.params || {})
       let { attr, msg } = DmgAttr.calcAttr({ originalAttr, buffs, artis, meta, params, talent: detail.talent || '', game })
       if (detail.isStatic) {
         return

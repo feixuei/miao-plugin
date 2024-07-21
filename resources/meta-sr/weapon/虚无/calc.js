@@ -4,7 +4,7 @@ export default function (staticIdx, keyIdx) {
       keyIdx('对陷入负面效果的敌人伤害提高[dmg]%，释放战技的功力提高[atkPct]%', { dmg: 1, atkPct: 3 })
     ],
     决心如汗珠般闪耀: [
-      keyIdx('攻陷状态敌方防御力降低[ignore]%', 'ignore', 2)
+      keyIdx('攻陷状态敌方防御力降低[enemyDef]%', 'enemyDef', 2)
     ],
     匿影: [],
     后会有期: [],
@@ -13,7 +13,7 @@ export default function (staticIdx, keyIdx) {
     ],
     延长记号: [
       staticIdx(1, 'stance'),
-      keyIdx('对触电或风化状态的地方目标伤害提高[dmg]%', 'dmg', 2)
+      keyIdx('对触电或风化状态的敌方目标伤害提高[dmg]%', 'dmg', 2)
     ],
     晚安与睡颜: [
       (tables) => {
@@ -53,6 +53,53 @@ export default function (staticIdx, keyIdx) {
     孤独的疗愈: [
       staticIdx(1, 'stance'),
       keyIdx('装备者造成的持续伤害提高[dotDmg]%', 'dotDmg', 2)
+    ],
+    重塑时光之忆: [
+      staticIdx(1, 'effPct'),
+      (tables) => {
+        return {
+          title: '4层Buff提高攻击力[atkPct]%，造成的持续伤害无视目标[dotIgnore]%的防御力',
+          data: {
+            atkPct: tables[2] * 4,
+            dotIgnore: tables[3] * 4
+          }
+        }
+      }
+    ],
+    好戏开演: [
+      (tables) => {
+        return {
+          title: '3层Buff提高造成的伤害[dmg]%',
+          data: {
+            dmg: tables[1] * 3
+          }
+        }
+      },
+      (tables) => {
+        return {
+          check: ({ attr, calc }) => calc(attr.effPct) >= 80,
+          title: '攻击力提高[atkPct]%',
+          data: {
+            atkPct: tables[2]
+          }
+        }
+      }
+    ],
+    行于流逝的岸: [
+      staticIdx(1, 'cdmg'),
+      (tables) => {
+        return {
+          title: '造成的伤害提高[dmg]%，终结技伤害额外提高[qDmg]%',
+          data: {
+            dmg: tables[2],
+            qDmg: tables[3]
+          }
+        }
+      }
+    ],
+    无边曼舞: [
+      staticIdx(1, 'cpct'),
+      keyIdx('对处于防御降低或减速状态下的敌人暴击伤害提高[cdmg]%', 'cdmg', 2)
     ]
   }
 }
